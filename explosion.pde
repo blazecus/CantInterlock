@@ -1,45 +1,53 @@
+import queasycam.*;
+QueasyCam cam;
 ArrayList<PVector[]> lines;
-PVector[] colors = new PVector[3];
+ArrayList<PVector> colors;
+ArrayList<PVector> originalLengths;
 float multiplier = 1.0;
 
 void setup(){
   size(1920,1080, P3D);
+  cam = new QueasyCam(this);
   lines = new ArrayList<PVector[]>();
-  for(int i = 0; i < 3; i++){
-    colors[i] = new PVector(random(0,255), random(0,255), random(0, 255));
+  colors = new ArrayList<PVector>();
+  originalLengths = new ArrayList<PVector>();
+  for(int i = 0; i < 5; i++){
+    add_new_chain(lines, colors, originalLengths);
   }
- 
+  
+}
+
+void add_new_chain(ArrayList<PVector[]> lines, ArrayList<PVector> colors, ArrayList<PVector> originalLengths){
+  colors.add(new PVector(random(0,255), random(0,255), random(0, 255)));
   PVector[] points = {
-    new PVector(random(0,1920), random(0,1080), random(-400, 400)), 
-    new PVector(random(0,1920), random(0,1080), random(-400, 400)), 
-    new PVector(random(0,1920), random(0,1080), random(-400, 400)) 
+    new PVector(random(-100,100), random(-100,100), random(-100, 100)), 
+    new PVector(random(-100,100), random(-100,100), random(-100, 100)), 
+    new PVector(random(-100,100), random(-100,100), random(-100, 100))
   };
   lines.add(points);
-  PVector[] points1 = {
-    new PVector(random(0,1920), random(0,1080), random(-400, 400)), 
-    new PVector(random(0,1920), random(0,1080), random(-400, 400)), 
-    new PVector(random(0,1920), random(0,1080), random(-400, 400))
-  };
-  lines.add(points1);
-  PVector[] points2 = {
-    new PVector(random(0,1920), random(0,1080), random(-400, 400)), 
-    new PVector(random(0,1920), random(0,1080), random(-400, 400)), 
-    new PVector(random(0,1920), random(0,1080), random(-400, 400))
-  };
-  lines.add(points2);
-  
+  originalLengths.add(new PVector(points[0].sub(points[1]).mag(), points[2].sub(points[1]).mag()));
+}
+
+PVector[] produce_new_vectors(PVector[] l, float multiplier, PVector originalLengths){
+  PVector[] temp = {PVector.mult(l[0], multiplier), PVector.mult(l[1], multiplier), PVector.mult(l[2], multiplier)};
+  PVector l1 = temp[0].sub(temp[1]);
+  temp[0] = l[0].sub(l1.mult( 1 - (float)(originalLengths.x / l1.mag())));
+  PVector l2 = temp[2].sub(temp[1]);
+  temp[2] = l[2].sub(l2.mult( 1 - (float)(originalLengths.y / l2.mag())));
+  print((1 - (float)(originalLengths.y / l2.mag())));
+  print("\n");
+  //print((1 - (float)(originalLengths.y / l2.mag())));
+  return temp;
 }
 
 void draw(){
   background(255, 255, 255);
   directionalLight(255, 255, 255, 1, 1, 0);
   //ambientLight(255,255,255);
-  multiplier += .0005;
-  int count = 0;
-  for(PVector[] i : lines){
-    PVector[] temp = {PVector.mult(i[0], multiplier), PVector.mult(i[1], multiplier), PVector.mult(i[2], multiplier)};
-    chain(temp, colors[count]);
-    count += 1;
+  multiplier += .001;
+  for(int i = 0; i < lines.size(); i++){
+    PVector[] temp = produce_new_vectors(lines.get(i), multiplier, originalLengths.get(i));
+    chain(temp, colors.get(i));
   }
 }
 
@@ -65,7 +73,7 @@ void drawWithPoints(PVector beginning, PVector end){
   translate(diff.mag()/2,0,0);
   rotateY(PI/2);
 
-  drawCylinder(10, 25, diff.mag());
+  drawCylinder(10, 2.5, diff.mag());
   popMatrix();
 }
 
